@@ -14,12 +14,18 @@ root, zero config.
 
 **Do not split this into multiple files or introduce a build step unless Hardik
 explicitly asks for it.** Keep editing it as one HTML file with direct string edits.
-It's currently ~3.8MB (most of that is base64-embedded screenshots/videos of his
+It's currently ~3.96MB (most of that is base64-embedded screenshots/videos of his
 real apps — that's intentional, see "Asset philosophy" below).
 
 ## Repo / deploy
 
-- GitHub repo: https://github.com/User01005/haha.hardikk
+- GitHub repo: https://github.com/hardikk-gupta/haha-hardikk (default branch `main`).
+  An older version of this file named `User01005/haha.hardikk`; the repo the Claude
+  Code sessions actually work in is `hardikk-gupta/haha-hardikk`.
+- Hardik merges PRs himself, quickly. Once a PR is merged, never stack new work on
+  the merged branch: restart the branch from `main` and open a new PR (this bit us
+  once: round 20 was pushed after PR #1 had already merged, so it never went live
+  until PR #2).
 - Intended flow: edit `index.html` → commit → push → Vercel (connected to the repo)
   auto-deploys. No `package.json`, no build command needed — Vercel should serve it
   as a static site (set the framework preset to "Other" and output directory to
@@ -223,6 +229,23 @@ change done:
 - External links in case-study CTAs/links rows should open in a new tab
   (`target="_blank" rel="noopener"`) — this is already handled for anything
   starting with `http`.
+- There is now a whole **interaction layer** (rounds 19, 20, 21) on top of the site.
+  Every one of the 30 interactions is documented in **`INTERACTIONS.md`** at the repo
+  root: what it does, how it's built, what site internals it touches, and gotchas.
+  Read that file before adding, removing or changing any interaction, and before
+  adding a new keyboard shortcut (it has the full key map and z-index map).
+- The interaction code lives in three CSS blocks (just before `</style>`) and three
+  JS IIFEs (just before `window.__ok=true;`), each headed
+  `ROUND 19: things to find`, `ROUND 20: the jaw droppers`,
+  `ROUND 21: the ones that sell the work`. Each interaction is its own sub-IIFE.
+- Anything a visitor can discover calls `window.hgFound(key)` so it counts in the
+  "found" pill bottom left. New discoverable interactions should add an entry to
+  `LIST` in the round 19 block and call `hgFound`. `document` gets an `hgfound`
+  event per discovery.
+- Keys already taken: `/` chat, `Shift+O` outline, hold `Alt` measure, `L` layers,
+  hold `C` code lens, `P` present (case pages), `D` dev mode, `Shift+H` history,
+  `Cmd/Ctrl+C` over a doodle (copy as SVG), plus the older `V` `P` `X` `1`-`5` hero
+  pen keys, `Ctrl/Cmd+Z` plane, and typing `hardik`.
 
 ## What Hardik actually wants from you right now
 
@@ -232,3 +255,97 @@ plainly and ask — don't silently improvise on the architecture above, since it
 deliberate and consistent across three projects already. Otherwise, just keep
 building: finish Parchi and Hourbit to the same pattern, and look into the
 performance question once he confirms his GPU acceleration status.
+
+## Session log: the interactions sessions (25 to 26 Sept 2026)
+
+This is the history of one long Claude Code session, kept here so the next session
+knows what happened and why. The full per-interaction spec is in `INTERACTIONS.md`.
+
+### 1. Read-through and audit (no code changed)
+Hardik asked for CLAUDE.md and `index.html` to be read. Things found that disagree
+with this file, **still open, not fixed**:
+- **Alter's pillar colour.** This file says Alter is yellow `#FFD44E`, but the code
+  (`P` array) gives Alter `s:"#E7BBFF"` (purple) and Parchi yellow. Alter's app UI is
+  black and yellow, but its card colour is purple. Alter also has no scoped
+  `#v-case[data-case="alter"]{--acc:...}` rule (Track It and Washio do). Needs a
+  decision from Hardik.
+- **Copy that says Washio shipped**, which breaks the "design only" rule: the home
+  drop lede "Four products, each one shipped.", the design-note pin "Every one of
+  these shipped. No concept pieces…", the About line "Four apps live on my phone
+  that I designed and shipped myself", and the About beat "On the laundry app, the
+  brief was scheduling…" (that's the old concept's story, not Washio's).
+- **Dashes used as punctuation** in live copy: the About beats ("That changes how I
+  work — I argue…"), the offer text "state changes — designed, then built", the
+  canvas lede "Each section has a cover — tear it off", "Nerdy Designer — 33 posts".
+  Only the About education-line dash was fixed (round 19).
+- Leftover dead data: the old `focus` / `laundry` entries in `P` (overwritten by the
+  "ROUND 12: the real project list" patch) and unused `focus` / `laundry` keys in `FEAT`.
+
+### 2. Round 19: "crazy interactions, especially in the copy" (PR #1, merged)
+Hardik asked for lots of micro interactions, especially copy you can edit or watch
+change, placed across the whole site, told as a story. Research was limited: this
+container's network blocks Awwwards, Codrops and most inspiration sites, so ideas
+came from search results plus known patterns (Figma cursor chat and outline mode,
+Medium's selection toolbar, Word tracked changes, cursor-proximity type).
+Built: the found counter (0), cursor chat (1), red pen title editing (2), the Work
+title's tracked change (3), clickable hero words (4), nav decode (5), redacted
+About line (6), tone slider (7), selection toolbar (8), reading ink (9), leaning
+title letters (10), falling footer (11), outline mode (12), tab title (13), and
+hooked the existing "hardik" egg into the counter (14).
+Bugs found and fixed while testing: cursor chat lost typed characters (focus was on
+a timeout), the hero word slot mis-measured width (grid items stretch; needs
+`justify-self:center`, `letter-spacing:inherit`, and width only set during the
+animation), and the slot collapsed to 0 on phones when the page loaded on another
+route.
+
+### 3. Round 20: "things that make my jaw drop" (PR #2, merged)
+Hardik said round 19 was stuff anyone could imagine and asked for things even a
+motion designer wouldn't think of. The brief became: things a website isn't supposed
+to be able to do. Built: two windows joined by a rope across the real screen gap
+(15), hold Alt to measure (16), L for a live layers panel (17), hold C for a code
+lens (18), favicon minimap (19), slingshot back to top (20), resize ruler with the
+real breakpoints (21), printing gives a one page CV (22), sleepy doodles (23).
+Bugs fixed: the code lens's regex colouring re-coloured its own output (replaced
+with a single-pass tokenizer) and it picked single letters (now climbs to a
+meaningful parent); the print CV turned "2024–25" into "202425"; the resize readout
+covered the nav. Note: round 20 was pushed after PR #1 had already been merged, so
+it was not live until a second PR (#2) was opened. Lesson recorded above under
+Repo / deploy.
+
+### 4. Round 21: "all 8" (PR #3, merged)
+Claude pushed back on piling up tricks (discoverability and the existing perf
+worry) and proposed eight that also show off the work; Hardik said "all 8". Built:
+copy a doodle into Figma as real vectors (24), drag a work card to the desktop as a
+file (25), present mode for any case study (26), a live Parchi voice billing demo
+(27), Dev Mode on D (28), address bar reading progress (29), version history of the
+visit on Shift+H (30), a DevTools console note with `hardik.hire()` (31).
+Rejected on purpose: real multiplayer cursors between live visitors, because the site
+is static with no server and that would need a paid realtime service.
+
+### 5. The interactions brief
+Hardik asked for a numbered list of every interaction with enough detail for another
+Claude session to rebuild them, so he can cross out the ones he doesn't want. That's
+`INTERACTIONS.md` (items 0 to 31). The on-page counter says 28 because it counts the
+pre-existing "hardik" egg and skips three ambient effects (reading ink, favicon,
+address bar).
+
+### Decisions still waiting on Hardik
+- **Tone slider (item 7)** deliberately shows buzzword copy as a parody. Keep or cut.
+- **Parchi demo (item 27)** is Claude's approximation, labelled on the page as "a
+  small rebuild… not the app's own code. The rates are sample numbers." Swap in the
+  real Parchi parser and item list when he shares them, and decide whether sample ₹
+  amounts break the "no prices" rule.
+- **Print CV (item 22)** includes the Flipkart line from the About timeline.
+- **Present mode (item 26)** is thin on Parchi and Hourbit until their full case
+  studies exist.
+- Everything in section 1 above (Alter colour, "shipped" copy, dashes).
+
+### Testing status
+Every round passed the regression pass (all 11 routes at 1440px and 390px, no
+overflow, no page errors) plus scripted checks of each interaction in headless
+Chromium with screenshots. **Not verified on real hardware:** the two-window rope
+(headless windows all sit at 0,0, so a second window was faked), live speech in the
+Parchi demo (no mic in the container; the parser was tested directly on six orders),
+and dropping a dragged card onto a real desktop. Performance on Hardik's machine is
+still the open question from "Known open item: performance"; the new layer only runs
+heavy work while an overlay is open, but check it there first.
